@@ -360,26 +360,251 @@
         // Open cart (compatible with older Telegram versions)
         function openCart() {
             if (cart.length === 0) {
-                // Use simple alert instead of tg.showAlert for compatibility
                 alert('Savat bo\'sh');
                 return;
             }
             
-            // For now, show cart summary
-            let cartSummary = 'Savatdagi mahsulotlar:\\n\\n';
+            showCheckoutForm();
+        }
+        
+        // Show checkout form
+        function showCheckoutForm() {
             let total = 0;
+            let cartItems = '';
             
             cart.forEach(item => {
                 const itemTotal = item.product.price * item.quantity;
                 total += itemTotal;
-                cartSummary += `${item.product.name}\\n`;
-                cartSummary += `${item.quantity} x ${formatPrice(item.product.price)} = ${formatPrice(itemTotal)} so'm\\n\\n`;
+                cartItems += `
+                    <div style="display: flex; justify-content: space-between; padding: 10px; border-bottom: 1px solid #eee;">
+                        <div>
+                            <strong>${item.product.name}</strong><br>
+                            <small>${item.quantity} x ${formatPrice(item.product.price)} so'm</small>
+                        </div>
+                        <div style="font-weight: bold;">
+                            ${formatPrice(itemTotal)} so'm
+                        </div>
+                    </div>
+                `;
             });
             
-            cartSummary += `Jami: ${formatPrice(total)} so'm`;
+            const checkoutHTML = `
+                <div id="checkoutModal" style="
+                    position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+                    background: rgba(0,0,0,0.5); z-index: 1000; display: flex; 
+                    align-items: center; justify-content: center; padding: 20px;
+                ">
+                    <div style="
+                        background: white; border-radius: 15px; padding: 20px; 
+                        max-width: 400px; width: 100%; max-height: 90vh; overflow-y: auto;
+                    ">
+                        <h2 style="margin: 0 0 20px 0; text-align: center;">🛒 Buyurtma berish</h2>
+                        
+                        <div style="margin-bottom: 20px;">
+                            <h3>Savatdagi mahsulotlar:</h3>
+                            ${cartItems}
+                            <div style="padding: 15px; background: #f8f9fa; margin-top: 10px; border-radius: 8px;">
+                                <strong>Jami: ${formatPrice(total)} so'm</strong>
+                            </div>
+                        </div>
+                        
+                        <div style="margin-bottom: 20px;">
+                            <h3>Ma'lumotlaringiz:</h3>
+                            <input type="text" id="customerName" placeholder="Ism va familiya" style="
+                                width: 100%; padding: 12px; margin: 5px 0; border: 1px solid #ddd; 
+                                border-radius: 8px; font-size: 16px;
+                            ">
+                            <input type="tel" id="customerPhone" placeholder="Telefon raqam" style="
+                                width: 100%; padding: 12px; margin: 5px 0; border: 1px solid #ddd; 
+                                border-radius: 8px; font-size: 16px;
+                            ">
+                            <textarea id="customerAddress" placeholder="Yetkazib berish manzili" style="
+                                width: 100%; padding: 12px; margin: 5px 0; border: 1px solid #ddd; 
+                                border-radius: 8px; font-size: 16px; height: 80px; resize: vertical;
+                            "></textarea>
+                        </div>
+                        
+                        <div style="margin-bottom: 20px;">
+                            <h3>To'lov usulini tanlang:</h3>
+                            <div style="display: grid; gap: 10px;">
+                                <button onclick="selectPaymentMethod('online')" id="onlinePayBtn" style="
+                                    padding: 15px; border: 2px solid #007bff; background: #f8f9ff; 
+                                    border-radius: 8px; cursor: pointer; font-size: 16px;
+                                ">
+                                    💳 Elektron to'lov<br>
+                                    <small>Payme, Click, Uzcard, Humo</small>
+                                </button>
+                                <button onclick="selectPaymentMethod('cash')" id="cashPayBtn" style="
+                                    padding: 15px; border: 2px solid #28a745; background: #f8fff8; 
+                                    border-radius: 8px; cursor: pointer; font-size: 16px;
+                                ">
+                                    💵 Naqd to'lov<br>
+                                    <small>Mahsulotni qo'lga olgandan keyin</small>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div style="display: flex; gap: 10px;">
+                            <button onclick="closeCheckout()" style="
+                                flex: 1; padding: 12px; background: #6c757d; color: white; 
+                                border: none; border-radius: 8px; font-size: 16px; cursor: pointer;
+                            ">Bekor qilish</button>
+                            <button onclick="confirmOrder()" id="confirmBtn" style="
+                                flex: 2; padding: 12px; background: #28a745; color: white; 
+                                border: none; border-radius: 8px; font-size: 16px; cursor: pointer;
+                            " disabled>Buyurtma berish</button>
+                        </div>
+                    </div>
+                </div>
+            `;
             
-            // Use simple alert for compatibility
-            alert(cartSummary);
+            document.body.insertAdjacentHTML('beforeend', checkoutHTML);
+        }
+        
+        let selectedPaymentMethod = null;
+        
+        // Select payment method
+        function selectPaymentMethod(method) {
+            selectedPaymentMethod = method;
+            
+            // Reset button styles
+            document.getElementById('onlinePayBtn').style.background = '#f8f9ff';
+            document.getElementById('cashPayBtn').style.background = '#f8fff8';
+            
+            // Highlight selected method
+            if (method === 'online') {
+                document.getElementById('onlinePayBtn').style.background = '#007bff';
+                document.getElementById('onlinePayBtn').style.color = 'white';
+            } else {
+                document.getElementById('cashPayBtn').style.background = '#28a745';
+                document.getElementById('cashPayBtn').style.color = 'white';
+            }
+            
+            // Enable confirm button
+            document.getElementById('confirmBtn').disabled = false;
+            document.getElementById('confirmBtn').style.background = '#28a745';
+        }
+        
+        // Close checkout
+        function closeCheckout() {
+            const modal = document.getElementById('checkoutModal');
+            if (modal) {
+                modal.remove();
+            }
+        }
+        
+        // Confirm order
+        function confirmOrder() {
+            const name = document.getElementById('customerName').value.trim();
+            const phone = document.getElementById('customerPhone').value.trim();
+            const address = document.getElementById('customerAddress').value.trim();
+            
+            if (!name || !phone || !address) {
+                alert('Iltimos, barcha maydonlarni to\'ldiring');
+                return;
+            }
+            
+            if (!selectedPaymentMethod) {
+                alert('Iltimos, to\'lov usulini tanlang');
+                return;
+            }
+            
+            // Create order
+            createOrder(name, phone, address, selectedPaymentMethod);
+        }
+        
+        // Create order
+        function createOrder(name, phone, address, paymentMethod) {
+            let total = 0;
+            const orderItems = cart.map(item => {
+                const itemTotal = item.product.price * item.quantity;
+                total += itemTotal;
+                return {
+                    productId: item.productId,
+                    productName: item.product.name,
+                    quantity: item.quantity,
+                    unitPrice: item.product.price,
+                    totalPrice: itemTotal
+                };
+            });
+            
+            const orderNumber = 'ORD' + Date.now();
+            
+            // Show order confirmation
+            showOrderConfirmation(orderNumber, name, phone, address, paymentMethod, orderItems, total);
+            
+            // Clear cart
+            cart = [];
+            updateCartUI();
+            closeCheckout();
+        }
+        
+        // Show order confirmation
+        function showOrderConfirmation(orderNumber, name, phone, address, paymentMethod, items, total) {
+            let itemsList = '';
+            items.forEach(item => {
+                itemsList += `• ${item.productName} x${item.quantity} - ${formatPrice(item.totalPrice)} so'm\n`;
+            });
+            
+            const paymentText = paymentMethod === 'online' ? 
+                '💳 Elektron to\'lov (Payme/Click)' : 
+                '💵 Naqd to\'lov (yetkazib berishda)';
+            
+            const confirmationHTML = `
+                <div id="confirmationModal" style="
+                    position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+                    background: rgba(0,0,0,0.5); z-index: 1001; display: flex; 
+                    align-items: center; justify-content: center; padding: 20px;
+                ">
+                    <div style="
+                        background: white; border-radius: 15px; padding: 20px; 
+                        max-width: 400px; width: 100%; text-align: center;
+                    ">
+                        <div style="font-size: 48px; margin-bottom: 20px;">✅</div>
+                        <h2 style="color: #28a745; margin-bottom: 20px;">Buyurtma qabul qilindi!</h2>
+                        
+                        <div style="text-align: left; background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                            <strong>Buyurtma №: ${orderNumber}</strong><br><br>
+                            <strong>Mijoz:</strong> ${name}<br>
+                            <strong>Telefon:</strong> ${phone}<br>
+                            <strong>Manzil:</strong> ${address}<br><br>
+                            <strong>To'lov:</strong> ${paymentText}<br><br>
+                            <strong>Mahsulotlar:</strong><br>
+                            ${itemsList.replace(/\n/g, '<br>')}<br>
+                            <strong>Jami: ${formatPrice(total)} so'm</strong>
+                        </div>
+                        
+                        ${paymentMethod === 'online' ? `
+                            <div style="background: #e3f2fd; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                                <strong>💳 To'lov qilish:</strong><br>
+                                Payme: <strong>+998 90 123 45 67</strong><br>
+                                Click: <strong>+998 90 123 45 67</strong><br>
+                                <small>To'lov qilgandan keyin admin bilan bog'laning</small>
+                            </div>
+                        ` : `
+                            <div style="background: #f8fff8; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                                <strong>💵 Naqd to'lov</strong><br>
+                                Mahsulotni yetkazib berganda to'lov qiling
+                            </div>
+                        `}
+                        
+                        <button onclick="closeConfirmation()" style="
+                            width: 100%; padding: 12px; background: #007bff; color: white; 
+                            border: none; border-radius: 8px; font-size: 16px; cursor: pointer;
+                        ">Yaxshi</button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.insertAdjacentHTML('beforeend', confirmationHTML);
+        }
+        
+        // Close confirmation
+        function closeConfirmation() {
+            const modal = document.getElementById('confirmationModal');
+            if (modal) {
+                modal.remove();
+            }
         }
         
         // Format price
@@ -388,21 +613,10 @@
         }
         
         // Set main button for checkout
-        tg.MainButton.text = "Buyurtma berish";
+        tg.MainButton.text = "🛒 Savatni ko'rish";
         tg.MainButton.onClick(function() {
-            if (cart.length === 0) {
-                tg.showAlert('Avval mahsulot tanlang');
-                return;
-            }
-            
-            // This will open checkout process
-            openCheckout();
+            openCart();
         });
-        
-        function openCheckout() {
-            // Simple checkout for now
-            alert('Buyurtma berish tez orada ishga tushadi');
-        }
         
         // Update main button visibility
         function updateMainButton() {
