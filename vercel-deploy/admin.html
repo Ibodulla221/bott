@@ -285,13 +285,18 @@
     </div>
 
     <script>
+        // API Configuration
+        const API_BASE_URL = window.location.hostname === 'localhost' ? 
+            'http://localhost:8080' : 
+            'https://your-backend-url.herokuapp.com'; // Replace with actual backend URL
+            
         // Check authentication first
         if (localStorage.getItem('adminAuth') !== 'true') {
             window.location.href = '/login.html';
         }
         
-        // API base URL - localhost server uchun (CORS bilan)
-        const API_BASE = 'http://localhost:8080/api/admin';
+        // API base URL
+        const API_BASE = `${API_BASE_URL}/api/admin`;
         
         // Load data when page loads
         document.addEventListener('DOMContentLoaded', function() {

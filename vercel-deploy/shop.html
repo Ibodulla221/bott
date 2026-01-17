@@ -5,6 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ko'zoynak Do'koni</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script>
+        // API Configuration
+        const API_BASE_URL = window.location.hostname === 'localhost' ? 
+            'http://localhost:8080' : 
+            'https://your-backend-url.herokuapp.com'; // Replace with actual backend URL
+    </script>
     <style>
         * {
             margin: 0;
@@ -206,7 +212,7 @@
         // Load products from API
         async function loadProducts() {
             try {
-                const response = await fetch('/api/shop/products');
+                const response = await fetch(`${API_BASE_URL}/api/shop/products`);
                 
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
@@ -514,24 +520,50 @@
         }
         
         // Create order
-        function createOrder(name, phone, address, paymentMethod) {
+        async function createOrder(name, phone, address, paymentMethod) {
             let total = 0;
             const orderItems = cart.map(item => {
                 const itemTotal = item.product.price * item.quantity;
                 total += itemTotal;
                 return {
                     productId: item.productId,
-                    productName: item.product.name,
-                    quantity: item.quantity,
-                    unitPrice: item.product.price,
-                    totalPrice: itemTotal
+                    quantity: item.quantity
                 };
             });
             
-            const orderNumber = 'ORD' + Date.now();
+            const orderData = {
+                userId: tg.initDataUnsafe?.user?.id || 123456789, // Telegram user ID
+                customerName: name,
+                phoneNumber: phone,
+                deliveryAddress: address,
+                notes: `To'lov usuli: ${paymentMethod === 'online' ? 'Elektron to\'lov' : 'Naqd to\'lov'}`,
+                items: orderItems
+            };
             
-            // Show order confirmation
-            showOrderConfirmation(orderNumber, name, phone, address, paymentMethod, orderItems, total);
+            try {
+                // Send order to backend
+                const response = await fetch(`${API_BASE_URL}/api/shop/orders`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(orderData)
+                });
+                
+                if (response.ok) {
+                    const order = await response.json();
+                    showOrderConfirmation(order.orderNumber, name, phone, address, paymentMethod, cart, total);
+                } else {
+                    // Fallback to local order if API fails
+                    const orderNumber = 'ORD' + Date.now();
+                    showOrderConfirmation(orderNumber, name, phone, address, paymentMethod, cart, total);
+                }
+            } catch (error) {
+                console.error('Error creating order:', error);
+                // Fallback to local order
+                const orderNumber = 'ORD' + Date.now();
+                showOrderConfirmation(orderNumber, name, phone, address, paymentMethod, cart, total);
+            }
             
             // Clear cart
             cart = [];

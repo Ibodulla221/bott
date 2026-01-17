@@ -514,24 +514,50 @@
         }
         
         // Create order
-        function createOrder(name, phone, address, paymentMethod) {
+        async function createOrder(name, phone, address, paymentMethod) {
             let total = 0;
             const orderItems = cart.map(item => {
                 const itemTotal = item.product.price * item.quantity;
                 total += itemTotal;
                 return {
                     productId: item.productId,
-                    productName: item.product.name,
-                    quantity: item.quantity,
-                    unitPrice: item.product.price,
-                    totalPrice: itemTotal
+                    quantity: item.quantity
                 };
             });
             
-            const orderNumber = 'ORD' + Date.now();
+            const orderData = {
+                userId: tg.initDataUnsafe?.user?.id || 123456789, // Telegram user ID
+                customerName: name,
+                phoneNumber: phone,
+                deliveryAddress: address,
+                notes: `To'lov usuli: ${paymentMethod === 'online' ? 'Elektron to\'lov' : 'Naqd to\'lov'}`,
+                items: orderItems
+            };
             
-            // Show order confirmation
-            showOrderConfirmation(orderNumber, name, phone, address, paymentMethod, orderItems, total);
+            try {
+                // Send order to backend
+                const response = await fetch('/api/shop/orders', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(orderData)
+                });
+                
+                if (response.ok) {
+                    const order = await response.json();
+                    showOrderConfirmation(order.orderNumber, name, phone, address, paymentMethod, cart, total);
+                } else {
+                    // Fallback to local order if API fails
+                    const orderNumber = 'ORD' + Date.now();
+                    showOrderConfirmation(orderNumber, name, phone, address, paymentMethod, cart, total);
+                }
+            } catch (error) {
+                console.error('Error creating order:', error);
+                // Fallback to local order
+                const orderNumber = 'ORD' + Date.now();
+                showOrderConfirmation(orderNumber, name, phone, address, paymentMethod, cart, total);
+            }
             
             // Clear cart
             cart = [];

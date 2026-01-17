@@ -15,7 +15,6 @@ import java.util.ArrayList;
 @RestController
 @RequestMapping("/api/shop")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
 public class ShopController {
     
     private final ProductService productService;
@@ -79,7 +78,23 @@ public class ShopController {
             request.getPhoneNumber()
         );
         
+        // Send notification to admin via Telegram
+        sendOrderNotificationToAdmin(order);
+        
         return ResponseEntity.ok(convertToOrderDto(order));
+    }
+    
+    private void sendOrderNotificationToAdmin(Order order) {
+        try {
+            // This would need to be implemented with a Telegram bot service
+            // For now, we'll log it
+            System.out.println("🔔 Yangi buyurtma: " + order.getOrderNumber());
+            System.out.println("👤 Mijoz: " + order.getCustomerName());
+            System.out.println("📱 Telefon: " + order.getPhoneNumber());
+            System.out.println("💰 Summa: " + order.getTotalAmount() + " so'm");
+        } catch (Exception e) {
+            System.err.println("Error sending notification: " + e.getMessage());
+        }
     }
     
     @GetMapping("/orders/user/{userId}")
