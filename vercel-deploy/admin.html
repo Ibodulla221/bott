@@ -290,8 +290,8 @@
             window.location.href = '/login.html';
         }
         
-        // API base URL
-        const API_BASE = '/api/admin';
+        // API base URL - localhost server uchun (CORS bilan)
+        const API_BASE = 'http://localhost:8080/api/admin';
         
         // Load data when page loads
         document.addEventListener('DOMContentLoaded', function() {

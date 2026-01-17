@@ -325,8 +325,8 @@ public class KuponBot extends TelegramLongPollingBot {
             new org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton();
         shopButton.setText("🛒 Do'konni ochish");
         
-        // For development, we'll use URL. For production, you need HTTPS domain for WebApp
-        shopButton.setUrl("http://localhost:8080/shop.html");
+        // Production Vercel HTTPS domain
+        shopButton.setUrl("https://bott-ondv.vercel.app/shop.html");
         
         row.add(shopButton);
         keyboard.add(row);
