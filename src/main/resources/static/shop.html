@@ -237,7 +237,7 @@
                     name: "Ray-Ban Aviator Classic",
                     description: "Klassik aviator uslubidagi ko'zoynak. UV himoyasi bilan.",
                     price: 450000,
-                    imageUrl: "https://via.placeholder.com/300x200/007bff/ffffff?text=Ray-Ban+Aviator",
+                    imageUrl: "https://images.unsplash.com/photo-1511499767150-a48a237f0083?w=300&h=200&fit=crop",
                     stockQuantity: 15,
                     status: "ACTIVE"
                 },
@@ -246,7 +246,7 @@
                     name: "Oakley Holbrook Sport",
                     description: "Sport uslubidagi ko'zoynak. Faol hayot tarzi uchun ideal.",
                     price: 380000,
-                    imageUrl: "https://via.placeholder.com/300x200/28a745/ffffff?text=Oakley+Holbrook",
+                    imageUrl: "https://images.unsplash.com/photo-1574258495973-f010dfbb5371?w=300&h=200&fit=crop",
                     stockQuantity: 20,
                     status: "ACTIVE"
                 },
@@ -255,7 +255,7 @@
                     name: "Persol Premium",
                     description: "Italyan dizayni. Premium sifat va uslub.",
                     price: 650000,
-                    imageUrl: "https://via.placeholder.com/300x200/dc3545/ffffff?text=Persol+Premium",
+                    imageUrl: "https://images.unsplash.com/photo-1572635196237-14b3f281503f?w=300&h=200&fit=crop",
                     stockQuantity: 8,
                     status: "ACTIVE"
                 }
@@ -318,7 +318,7 @@
                 if (existingItem.quantity < product.stockQuantity) {
                     existingItem.quantity++;
                 } else {
-                    tg.showAlert('Bu mahsulotdan ko\'proq mavjud emas');
+                    alert('Bu mahsulotdan ko\'proq mavjud emas');
                     return;
                 }
             } else {
@@ -330,7 +330,15 @@
             }
             
             updateCartUI();
-            tg.HapticFeedback.impactOccurred('light');
+            
+            // Use HapticFeedback only if supported
+            if (tg.HapticFeedback && typeof tg.HapticFeedback.impactOccurred === 'function') {
+                try {
+                    tg.HapticFeedback.impactOccurred('light');
+                } catch (e) {
+                    console.log('HapticFeedback not supported');
+                }
+            }
         }
         
         // Update cart UI
@@ -349,10 +357,11 @@
             }
         }
         
-        // Open cart (will be implemented in next step)
+        // Open cart (compatible with older Telegram versions)
         function openCart() {
             if (cart.length === 0) {
-                tg.showAlert('Savat bo\'sh');
+                // Use simple alert instead of tg.showAlert for compatibility
+                alert('Savat bo\'sh');
                 return;
             }
             
@@ -369,7 +378,8 @@
             
             cartSummary += `Jami: ${formatPrice(total)} so'm`;
             
-            tg.showAlert(cartSummary);
+            // Use simple alert for compatibility
+            alert(cartSummary);
         }
         
         // Format price
@@ -390,8 +400,8 @@
         });
         
         function openCheckout() {
-            // Will implement checkout in next step
-            tg.showAlert('Buyurtma berish tez orada ishga tushadi');
+            // Simple checkout for now
+            alert('Buyurtma berish tez orada ishga tushadi');
         }
         
         // Update main button visibility
